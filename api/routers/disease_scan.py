@@ -9,7 +9,9 @@ from fastapi import APIRouter, UploadFile, File
 from openai import AsyncOpenAI
 
 router = APIRouter()
+GROQ_KEY = os.getenv("GROQ_API_KEY", "")
 OPENAI_KEY = os.getenv("OPENAI_API_KEY", "")
+API_KEY = GROQ_KEY or OPENAI_KEY
 
 # Disease knowledge base for mock/fallback
 DISEASE_DB = {
@@ -83,13 +85,17 @@ MOCK_KEYS = list(DISEASE_DB.keys())
 
 
 async def _analyze_with_openai(image_bytes: bytes, filename: str) -> dict:
-    client = AsyncOpenAI(api_key=OPENAI_KEY)
+    is_groq = API_KEY.startswith("gsk_")
+    base_url = "https://api.groq.com/openai/v1" if is_groq else None
+    model_name = "llama-3.2-11b-vision-preview" if is_groq else "gpt-4o-mini"
+
+    client = AsyncOpenAI(api_key=API_KEY, base_url=base_url)
     b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "jpeg"
     mime = f"image/{ext}" if ext in ["jpeg", "jpg", "png", "webp"] else "image/jpeg"
 
     response = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=model_name,
         messages=[
             {
                 "role": "system",
@@ -136,13 +142,22 @@ async def scan_disease(file: UploadFile = File(...)):
     contents = await file.read()
     filename = file.filename or "upload.jpg"
 
-    if OPENAI_KEY and OPENAI_KEY != "your_openai_key_here":
+    if API_KEY and API_KEY not in ["your_openai_key_here", ""]:
         try:
             result = await _analyze_with_openai(contents, filename)
-            result["source"] = "openai_vision"
+            result["source"] = "groq_vision" if API_KEY.startswith("gsk_") else "openai_vision"
             return result
         except Exception as e:
             print(f"OpenAI vision error: {e}, using mock")
+            result = _mock_disease_analysis(filename)
+            if 'insufficient_quota' in str(e):
+                result["name"] = f"[Quota Error] {result['name']}"
+                result["cause"] = "ERROR: Your OpenAI API key has insufficient quota (out of credits). Please add funds. " + result.get("cause", "")
+                result["source"] = "quota_error_mock"
+            else:
+                result["name"] = f"[API Error] {result['name']}"
+                result["source"] = "api_error_mock"
+            return result
 
     result = _mock_disease_analysis(filename)
     result["source"] = "demo_mode"

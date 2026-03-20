@@ -53,7 +53,7 @@ async def chat_with_ai(request: ChatRequest):
         
     is_groq = api_key.startswith("gsk_")
     base_url = "https://api.groq.com/openai/v1" if is_groq else None
-    model_name = "llama3-8b-8192" if is_groq else "gpt-4o-mini"
+    model_name = "llama-3.1-8b-instant" if is_groq else "gpt-4o-mini"
     
     try:
         client = AsyncOpenAI(
@@ -81,7 +81,13 @@ async def chat_with_ai(request: ChatRequest):
         
     except Exception as e:
         print(f"Chat API Cloud Error: {e}")
+        # Identify if it's a quota/billing error to explicitly inform the user
+        if 'insufficient_quota' in str(e):
+            error_details = "ERROR: Your OpenAI API key has insufficient quota (out of credits). Please add funds to your OpenAI billing account."
+        else:
+            error_details = f"API Error encountered: {str(e)}"
+            
         return {
-            "response": fallback_engine(request.message),
-            "source": "rule_engine"
+            "response": f"**{error_details}**\n\n*Falling back to local offline diagnostic engine...*\n\n{fallback_engine(request.message)}",
+            "source": "rule_engine_fallback"
         }
