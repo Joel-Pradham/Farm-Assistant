@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from routers import weather, crop_recommend, disease_scan, fertilizer, chat
+from api.routers import weather, crop_recommend, disease_scan, fertilizer, chat
 
 app = FastAPI(
     title="Terra Intelligence API",
