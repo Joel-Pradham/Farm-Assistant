@@ -87,7 +87,7 @@ MOCK_KEYS = list(DISEASE_DB.keys())
 async def _analyze_with_openai(image_bytes: bytes, filename: str) -> dict:
     is_groq = API_KEY.startswith("gsk_")
     base_url = "https://api.groq.com/openai/v1" if is_groq else None
-    model_name = "llama-3.2-11b-vision-preview" if is_groq else "gpt-4o-mini"
+    model_name = "meta-llama/llama-4-scout-17b-16e-instruct" if is_groq else "gpt-4o-mini"
 
     client = AsyncOpenAI(api_key=API_KEY, base_url=base_url)
     b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
@@ -148,17 +148,44 @@ async def scan_disease(file: UploadFile = File(...)):
             result["source"] = "groq_vision" if API_KEY.startswith("gsk_") else "openai_vision"
             return result
         except Exception as e:
-            print(f"OpenAI vision error: {e}, using mock")
-            result = _mock_disease_analysis(filename)
+            print(f"OpenAI vision error: {e}")
             if 'insufficient_quota' in str(e):
-                result["name"] = f"[Quota Error] {result['name']}"
-                result["cause"] = "ERROR: Your OpenAI API key has insufficient quota (out of credits). Please add funds. " + result.get("cause", "")
-                result["source"] = "quota_error_mock"
+                return {
+                    "name": "API Quota Exceeded",
+                    "crop": "Unknown",
+                    "confidence": 0,
+                    "severity": "Critical",
+                    "cause": "Your API key has insufficient quota (out of credits). Please add funds.",
+                    "symptoms": ["API Error: Insufficient Quota"],
+                    "treatment": ["Add funds to your API account"],
+                    "prevention": "Ensure billing is active",
+                    "urgency": "Immediate",
+                    "source": "quota_error"
+                }
             else:
-                result["name"] = f"[API Error] {result['name']}"
-                result["source"] = "api_error_mock"
-            return result
+                return {
+                    "name": "AI Service Unavailable",
+                    "crop": "Unknown",
+                    "confidence": 0,
+                    "severity": "Critical",
+                    "cause": f"The AI analysis service failed: {str(e)}",
+                    "symptoms": ["API Error"],
+                    "treatment": ["Try again later", "Check API keys and model availability"],
+                    "prevention": "Monitor AI service status",
+                    "urgency": "Immediate",
+                    "source": "api_error"
+                }
 
-    result = _mock_disease_analysis(filename)
-    result["source"] = "demo_mode"
-    return result
+    # If no API key is provided at all
+    return {
+        "name": "Demo Mode: No API Key Configured",
+        "crop": "Unknown",
+        "confidence": 0,
+        "severity": "Low",
+        "cause": "No Groq or OpenAI API key found in backend configuration.",
+        "symptoms": ["Missing API Key"],
+        "treatment": ["Add GROQ_API_KEY to .env"],
+        "prevention": "Configure environment variables properly",
+        "urgency": "Low",
+        "source": "demo_mode"
+    }
