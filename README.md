@@ -1,6 +1,6 @@
-# Terra Intelligence — AI-Powered Agricultural Decision System
+# Farm Intel — AI-Powered Agricultural Decision System
 
-Terra Intelligence is a full-stack platform that provides data-driven insights for modern agriculture. It combines computer vision, environmental data, and rule-based analysis to assist in crop health monitoring, fertilizer planning, and decision-making.
+Farm Intel is a full-stack platform that provides data-driven insights for modern agriculture. It combines computer vision, environmental data, and rule-based analysis to assist in crop health monitoring, fertilizer planning, and decision-making.
 
 ---
 
