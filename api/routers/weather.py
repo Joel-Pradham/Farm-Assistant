@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 router = APIRouter()
 
-@router.get("/")
+@router.get("")
 async def get_weather(city: str = Query("Ernakulam"), country: str = Query("IN")):
     """
     High-performance Weather API using Open-Meteo (No API keys required)

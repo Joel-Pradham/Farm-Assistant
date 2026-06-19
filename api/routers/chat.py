@@ -40,12 +40,12 @@ def fallback_engine(msg: str) -> str:
         return "For Nendran Banana in Kerala, the general NPK recommendation per plant is 190g N, 115g P2O5, and 300g K2O. \n\n**Action to Take:**\n- Base application: 10kg Farm Yard Manure (FYM).\n- Split chemical fertilizers into 6 doses over the 10-month crop cycle."
     return "I am operating in fallback mode because no OpenAI API key is detected. However, my pre-programmed logic handles common Kerala crops. Please ask specifically about diseases in Coconut, Pepper, Rubber, or Banana."
 
-@router.post("/")
+@router.post("")
 async def chat_with_ai(request: ChatRequest):
     # Try GROQ first, fallback to OPENAI, then rule engine
     api_key = os.getenv("GROQ_API_KEY", os.getenv("OPENAI_API_KEY", ""))
     
-    if not api_key or api_key == "your_openai_key_here":
+    if not api_key or api_key in ["your_openai_key_here", "your_groq_key_here", ""]:
         return {
             "response": fallback_engine(request.message),
             "source": "rule_engine"
@@ -53,7 +53,7 @@ async def chat_with_ai(request: ChatRequest):
         
     is_groq = api_key.startswith("gsk_")
     base_url = "https://api.groq.com/openai/v1" if is_groq else None
-    model_name = "llama-3.1-8b-instant" if is_groq else "gpt-4o-mini"
+    model_name = "llama-3.3-70b-versatile" if is_groq else "gpt-4o-mini"
     
     try:
         client = AsyncOpenAI(

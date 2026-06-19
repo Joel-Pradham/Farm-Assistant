@@ -3,6 +3,10 @@
     {
       "source": "/api/(.*)",
       "destination": "/api/main.py"
+    },
+    {
+      "source": "/((?!api|assets|favicon|.*\\..*).*)",
+      "destination": "/index.html"
     }
   ]
 }
