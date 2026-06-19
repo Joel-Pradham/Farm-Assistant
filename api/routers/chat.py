@@ -43,7 +43,7 @@ def fallback_engine(msg: str) -> str:
 @router.post("")
 async def chat_with_ai(request: ChatRequest):
     # Try GROQ first, fallback to OPENAI, then rule engine
-    api_key = os.getenv("GROQ_API_KEY", os.getenv("OPENAI_API_KEY", ""))
+    api_key = os.getenv("GROQ_API_KEY", os.getenv("OPENAI_API_KEY", "")).strip()
     
     if not api_key or api_key in ["your_openai_key_here", "your_groq_key_here", ""]:
         return {

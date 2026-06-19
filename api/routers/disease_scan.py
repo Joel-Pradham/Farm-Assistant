@@ -13,8 +13,8 @@ from openai import AsyncOpenAI
 
 router = APIRouter()
 
-GROQ_KEY = os.getenv("GROQ_API_KEY", "")
-OPENAI_KEY = os.getenv("OPENAI_API_KEY", "")
+GROQ_KEY = os.getenv("GROQ_API_KEY", "").strip()
+OPENAI_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 API_KEY = GROQ_KEY or OPENAI_KEY
 
 # ─────────────────────────────────────────────
