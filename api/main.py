@@ -2,6 +2,7 @@
 Terra Intelligence — FastAPI Backend
 Main application entry point
 """
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -16,9 +17,20 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# CORS: allow localhost for dev + all vercel.app domains for production
+# When frontend and API are co-hosted on Vercel, same-origin requests skip CORS anyway.
+_extra_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
+_origins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "https://*.vercel.app",
+] + [o.strip() for o in _extra_origins if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173"],
+    allow_origins=_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,3 +46,4 @@ app.include_router(chat.router, prefix="/api/chat", tags=["AI Chat"])
 @app.get("/api/health")
 async def health_check():
     return {"status": "operational", "system": "Terra Intelligence v1.0"}
+
